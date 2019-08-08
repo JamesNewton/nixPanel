@@ -75,13 +75,13 @@ function OnStart() {
     //Create an connect button. 
     //btnConnect = app.CreateButton( "Connect", 0.23, 0.1 ); 
     btnConnect = makeImgButton(.23, .1, "Connect", 20)
-    btnConnect.SetOnTouch( btnConnect_OnTouch ); 
+    btnConnect.SetOnTouchUp( btnConnect_OnTouch ); 
     layBut.AddChild( btnConnect );
 
     //Create an send button. 
     //btnSend = app.CreateButton( "Send", 0.23, 0.1 ); 
     btnSend = makeImgButton(.23, .1, "Send", 20)
-    btnSend.SetOnTouch( btnSend_OnTouch ); 
+    btnSend.SetOnTouchUp( btnSend_OnTouch ); 
     layBut.AddChild( btnSend );
 
      //Create a reset button. 
