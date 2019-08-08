@@ -73,28 +73,29 @@ function OnStart() {
     lay.AddChild( layBut );
 
     //Create an connect button. 
-    btnConnect = app.CreateButton( "Connect", 0.23, 0.1 ); 
+    //btnConnect = app.CreateButton( "Connect", 0.23, 0.1 ); 
+    btnConnect = makeImgButton(.23, .1, "Connect", 20)
     btnConnect.SetOnTouch( btnConnect_OnTouch ); 
     layBut.AddChild( btnConnect );
 
     //Create an send button. 
-    btnSend = app.CreateButton( "Send", 0.23, 0.1 ); 
+    //btnSend = app.CreateButton( "Send", 0.23, 0.1 ); 
+    btnSend = makeImgButton(.23, .1, "Send", 20)
     btnSend.SetOnTouch( btnSend_OnTouch ); 
     layBut.AddChild( btnSend );
 
      //Create a reset button. 
     //btnReset = app.CreateButton( "Clear", 0.23, 0.1 ); 
-    btnReset = makeImgButton(.23, .1, "Clear", 22)//app.CreateImage( null, 0.23, .1, "button" );
-    //btnReset.SetTextSize( 24 , "dip");
-    //btnReset.DrawText("Clear",btnReset.MeasureText("Clear").width/2, 0.6);
+    btnReset = makeImgButton(.23, .1, "Clear", 20)
     btnReset.SetOnTouchUp( btnReset_OnTouch ); 
     btnReset.SetOnLongTouch( btnReset_OnLongTouch ); 
     layBut.AddChild( btnReset );
 
     //Create an save button. 
-    btnSave = app.CreateButton( "Save", 0.23, 0.1 ); 
-    btnSave.SetOnTouch( btnSave_OnTouch ); 
-    //btnSave.SetOnLongTouch (btnSave_OnLongTouch);
+    //btnSave = app.CreateButton( "Save", 0.23, 0.1 ); 
+    btnSave = makeImgButton(.23, .1, "Save", 20)
+    btnSave.SetOnTouchUp( btnSave_OnTouch ); 
+    btnSave.SetOnLongTouch (btnSave_OnLongTouch);
     layBut.AddChild( btnSave);
 
     //Add layout to app.     
@@ -102,12 +103,16 @@ function OnStart() {
 
     }
     
-function makeImgButton(w, h, text, points) {
-    let img = app.CreateImage( null, w, h, "button" );
-    img.SetTextSize(points, "dip");
-    let x = 0.5-img.MeasureText(text).width/2
-    let y = 0.5-img.MeasureText(text).height/2
-    img.DrawText(text,x,y);
+function makeImgButton(w, h, text, points) { 
+    //resulting object can have SetOnLongTouch
+    var img = app.CreateImage( null, w, h, "button" )
+    img.SetPaintColor( "#111111" )
+    img.DrawRectangle(0.05, 0.05, 0.95, 0.95)
+    img.SetPaintColor( "#ffffff" )
+    img.SetTextSize(points, "dip")
+    var x = 0.5-img.MeasureText(text).width/2
+    var y = 0.5+img.MeasureText(text).height/2
+    img.DrawText(text,x,y)
     return img
 }
 
@@ -206,7 +211,6 @@ function edt_OnChange() {
     }
 
 //Called when user touches program spinner.
-//http://dangerousprototypes.com/docs/Bus_Pirate_menu_options_guide
 function spin_OnTouch( item ) {
     num = item.slice( -1 );
     var s = item;
@@ -249,10 +253,6 @@ function spin_OnTouch( item ) {
     if ("m3" == cmds[item]) { //UART needs baud, data/parity, stop, polarity, out 
         btnUart_OnTouch();
         }
-    if ("D" == cmds[item]) {
-        s = "";
-        btnMultimeter_OnTouch();
-        }
     edt.SetText( s );
     edt.SetCursorPos( s.length ); //move cursor to end of string
     }
@@ -280,6 +280,7 @@ function findNextParm(item, start) {
     }
 
 //called when the user selects UART mode
+// leftover from last version, keeping to reuse for other things.
 function btnUart_OnTouch() {  
     var txt="";
     dlgTxt = app.CreateDialog( "UART mode" );
@@ -340,88 +341,6 @@ function btnUartOk_OnTouch(item) {
     dlgTxt.Hide();
     }
 
-//called when user selects ADC loop mode (D)
-function btnMultimeter_OnTouch() { 
-    dlgTxt = app.CreateDialog( "Multimeter mode" );
-        
-    //Create a layout for dialog.
-    layDlg = app.CreateLayout( "linear", "Vertical,Center" );
-    dlgTxt.AddLayout( layDlg );
-
-    //Create a read-only edit box to show responses. 
-    edtVolts = app.CreateText( "0.00", 0.95, 0.15, "Right, Monospace" ); 
-    edtVolts.SetMargins( 0,0,0,0.01 ); 
-    edtVolts.SetBackColor( "#333333" );
-    edtVolts.SetTextSize( 56 ); 
-    layDlg.AddChild( edtVolts );
-  
-    layDlgHoriz = app.CreateLayout( "Linear", "Horizontal" );
-    layDlg.AddChild( layDlgHoriz );
-    layDlgHoriz.AddChild( app.CreateText( "Scale:" ) );
-    
-    spinVolts = app.CreateSpinner( "x1,x5,x10,x25,x50,x100", 0.2 );
-    spinVolts.SetOnChange( spinVolts_onTouch );
-    layDlgHoriz.AddChild( spinVolts );
-
-    btnScaleCal  = app.CreateButton( "Calibrate", 0.3, 0.1 ); 
-    btnScaleCal.SetOnTouch( btnScaleCal_OnTouch ); 
-    layDlgHoriz.AddChild( btnScaleCal ); 
-    layDlg.AddChild( app.CreateText( "(Calibrate will turn on power supplies!)" ) );
-    txtScaleCal = null;
-
-    //Create an ok button. 
-    btnMultimeterOk  = app.CreateButton( "Exit", 0.23, 0.1 ); 
-    btnMultimeterOk.SetOnTouch( btnMultimeterOk_OnTouch ); 
-    layDlg.AddChild( btnMultimeterOk ); 
-     
-    //Show dialog.
-    dlgTxt.Show();
-    Send("d");
-    }
-
-function btnScaleCal_OnTouch() {
-    if (!txtScaleCal) { //if we haven't already entered this mode
-        layDlg.mode=mode; //save the starting mode locally
-        if ("HiZ>"==mode) { 
-            Send("m2");
-            app.ShowPopup("No power in HiZ, switching to 1-WIRE");
-            }
-        Send("W"); //Power UP!
-        txtScaleCal = app.CreateText( //teach user to connect scale pot
-             "1. Connect +5 volt power and ground across potentiometer\n"
-            +"2. Connect ADC to potentiometer wiper\n"
-            +"3. Select desired scale\n"
-            +"4. Trim potentiometer to show power supply voltage (5 V)\n"
-            +"5. Disconnect +5 volt power from potentiometer\n"
-            +"6. Connect voltage to be measured\n"
-            +"(click Calibrate to close)\n"
-            ,0.8, 0.4, "Left, Multiline");
-        layDlg.AddChild( txtScaleCal );
-        }
-    else { //if we are already in calibrate mode, get out
-        if ("HiZ>"==layDlg.mode) { 
-            Send("m1");
-            app.ShowPopup("Switching back to HiZ");
-            }
-        Send("w"); //Power Down
-        layDlg.DestroyChild(txtScaleCal);
-        txtScaleCal = null;
-        }
-    }
-
-function spinVolts_onTouch( item ) {
-    scaleADC = item.substring(1); //scale is after the "x"
-    }
-    
-function btnMultimeterOk_OnTouch() { 
-    if (txtScaleCal) { //if we are still in calibration mode
-        btnScaleCal_OnTouch(); //pretend the user closed it
-        }
-    layDlg.DestroyChild(edtVolts); //destroy the edit box
-    edtVolts = undefined; //and forget it so we don't funnel responses there.
-    dlgTxt.Hide(); //hide the dialog
-    Send("d"); //one last reading so the user as a record of it.
-    }
 
 //Check connection and send data.  
 function Send( s ) { 
@@ -429,13 +348,14 @@ function Send( s ) {
     else app.ShowPopup( "Please connect" ); 
     }
 
-//Called when we get data from the BusPirate
+//Called when we get data from the device
 function usb_OnReceive( data ) {
-    if (edt.GetText()=="hostname -I") {
-       if (data.indexOf("hostname -I")==-1) {
-            var a=data;
+    if (edt.GetText()=="hostname -I") { //we just sent an IP address request
+       if (data.indexOf("hostname -I")==-1) {//and this isn't an echo
+            var a=data; //so it must actually be the return data; the IP address
             txt.SetText("Status: "+a);
             edt.SetText(""); //must clear after first returned line
+            spin.SelectItem(descs[0]); //clear pull down so next selection works
             }
         }
     //Need to translate tabs into spaces.
@@ -470,3 +390,4 @@ function usb_OnReceive( data ) {
     log = logLines.join("\n").toString();
     edtReply.SetText( log );
     }
+    
