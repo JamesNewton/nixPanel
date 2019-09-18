@@ -3,23 +3,33 @@
 // Run in DroidScript which allows you to write apps in JavaScript:
 // http://droidscript.org/
 // https://play.google.com/store/apps/details?id=com.smartphoneremote.androidscriptfree
-// by James Newton 2019/08/08
+// by James Newton 2019/08/08 
 // http://techref.massmind.org/techref/index.html
 // Note: this application only works on devices that support  
 // OTG and allow access to external serial devices.
-// 
+//  
 // Known to work: iRola DX752, Nexus7, GalaxyS3/S4, ExperiaZUltra, TescoHudl,  
 // Asus MemoPad 8, Amazon Fire 7 (must install Google Play Store)
 // Known to work AND charge: iRola DX752
 // Don't work: Nexus4, GalaxyS1, AsusMemo
 
+//User setup: Edit this area for your application
+var get_dir="ls -d -1 -l --time-style=\"+%Y-%m-%d@%H:%M:%S\" " //1 per line, all data incl path
+var user_txts = "[user commands]\t\r";
+user_txts +="List Jobs\tls ~/dde_apps/*.dde\r";
+user_txts +="List files\t"+get_dir+"/srv/samba/share/dde_apps/**\r"
+user_txts +="Run Job Test\tcd /root/Documents/dde &&  node core define_and_start_job /srv/samba/share/test.dde\r";
+user_txts +="Say Network Status\t/srv/samba/share/speak-ip\r";
+
+var files = []; //known files
+
 //Global variables. 
 var connectStr="\n"; //sent to device upon connection.
-var usb=null, reply=""; 
+var usb=null, reply="";
 var log="", maxLines;
 var txts="", descs=[], cmds=[], ary;
 var desc="";
-var modes=" [ Going to sleep ";
+var modes="[  OK  ] ";
 var mode="";
 var aryParm=[];
 
@@ -30,8 +40,10 @@ function OnStart() {
     if (!txts) { //load default values if none saved.
         txts = "[select commands]\t\r";
         txts +="Get IP Address\thostname -I\r";
+        txts +="List files\t"+get_dir+"\"$PWD\"/**\r";
         txts +="Set #IP\tsetip\r";
-        txts +="Restart\t#\r";
+        txts +="Restart\tshutdown -r now\r";
+        txts += user_txts; //pick up the user defined commands. 
         }
 
     ary = txts.split("\r");
@@ -255,6 +267,10 @@ function spin_OnTouch( item ) {
         }
     edt.SetText( s );
     edt.SetCursorPos( s.length ); //move cursor to end of string
+    if (get_dir === cmds[item].slice(0,get_dir.length)) {//getting directory listing
+        files = [] //clear out the list of files
+        Send(cmds[item]) //do it right now (don't wait for send)
+        }
     }
 
 //Called when user presses Ok on parameter entry dialog
@@ -347,6 +363,11 @@ function Send( s ) {
     if( usb ) usb.Write( s+"\r" ); 
     else app.ShowPopup( "Please connect" ); 
     }
+    
+function show_files ( array_files ) {
+    app.ShowPopup( array_files.join('\n') ); 
+    }
+show_files.timeout = null
 
 //Called when we get data from the device
 function usb_OnReceive( data ) {
@@ -357,6 +378,13 @@ function usb_OnReceive( data ) {
             edt.SetText(""); //must clear after first returned line
             spin.SelectItem(descs[0]); //clear pull down so next selection works
             }
+        }
+    //capture listings
+    if (!edt.GetText().indexOf(get_dir) && data.indexOf(get_dir)) {
+        //Note: read up on indexOf. That line doesn't do what it looks like it does.
+        files.push(data.split());
+        clearTimeout(show_files.timeout)
+        show_files.timeout = setTimeout( "show_files(files)", 1000 )
         }
     //Need to translate tabs into spaces.
     var lines = data.split("\n");
@@ -383,8 +411,8 @@ function usb_OnReceive( data ) {
     for (var line in logLines) {
         maxChars = Math.max(maxChars, logLines[line].length);
         }
-    //we want 8 point when the line is 80(?ish) and up to 14 point at 10.
-    edtReply.SetTextSize(Math.min(16-maxChars/10,14));
+    //we want 10 point when the line is 80(?ish) and up to 16 point at 10.
+    edtReply.SetTextSize(Math.min(Math.max(10,17-maxChars/10),16));
     maxLines = edtReply.GetMaxLines()-1;
     logLines = logLines.slice( -maxLines );
     log = logLines.join("\n").toString();
